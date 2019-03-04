@@ -9,7 +9,7 @@ public class Bishop extends Piece {
         super(name, side, scalableMoves);
     }
 
-    public ArrayList<String> getPossibleMoves() {
+    public ArrayList<String> getPlausibleMoves() {
         ArrayList<String> possibleMoves = new ArrayList<>();
         possibleMoves.add("fl");
         possibleMoves.add("fr");

@@ -9,7 +9,7 @@ public class Knight extends Piece {
         super(name, side, scalableMoves);
     }
 
-    public ArrayList<String> getPossibleMoves() {
+    public ArrayList<String> getPlausibleMoves() {
         ArrayList<String> possibleMoves = new ArrayList<>();
         possibleMoves.add("fll");
         possibleMoves.add("ffl");

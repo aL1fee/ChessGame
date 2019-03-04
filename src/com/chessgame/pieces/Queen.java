@@ -9,7 +9,7 @@ public class Queen extends Piece {
         super(name, side, scalableMoves);
     }
 
-    public ArrayList<String> getPossibleMoves() {
+    public ArrayList<String> getPlausibleMoves() {
         ArrayList<String> possibleMoves = new ArrayList<>();
         possibleMoves.add("l");
         possibleMoves.add("fl");
