@@ -11,11 +11,11 @@ import java.util.Scanner;
 public class Board {
 
     private Piece[][] board;
-    private int boardDim;
+    public static int boardDim;
 
     public Board() {
-        board = new Piece[8][8];
         boardDim = 8;
+        board = new Piece[boardDim][boardDim];
         initializeBoard();
     }
 
@@ -57,10 +57,10 @@ public class Board {
                             board[i][j] = new Queen("q", "b", true);
                             break;
                         case "wk":
-                            board[i][j] = new Queen("k", "w", false);
+                            board[i][j] = new King("k", "w", false);
                             break;
                         case "bk":
-                            board[i][j] = new Queen("k", "b", false);
+                            board[i][j] = new King("k", "b", false);
                             break;
                         case "00":
                             board[i][j] = null;
@@ -74,6 +74,17 @@ public class Board {
         }
     }
 
+    public void flipBoard() {
+        Piece[][] oldBoard = getBoardCopy();
+        Piece[][] newBoard = new Piece[boardDim][boardDim];
+        for (int i = 0; i < boardDim; i++) {
+            for (int j = 0; j < boardDim; j++) {
+                newBoard[i][j] = oldBoard[boardDim - i - 1][boardDim - j - 1];
+            }
+        }
+        board = newBoard;
+    }
+
     public boolean isPossibleMove(int i1, int j1, String command) {
         return getPossibleMoves(i1, j1).contains(command);
     }
@@ -81,8 +92,8 @@ public class Board {
     public ArrayList<String> getPossibleMoves(int i1, int j1) {
         ArrayList<String> listOfAllMoves = new ArrayList<>();
         Piece movingPiece = board[i1][j1];
+        /* No piece at this location. */
         if (movingPiece == null) {
-            System.out.println("No piece at this location.");
             return listOfAllMoves;
         }
         ArrayList<String> possibleMovesMoves = movingPiece.getPlausibleMoves();
@@ -146,7 +157,8 @@ public class Board {
     }
 
     public boolean isKingAttacked(String color) {
-        String kingNotation = "k" + (color.equals("white") ? "w" : "b");
+        String kingNotation = (color.equals("white") ? "w" : "b") + "k";
+        System.out.println(kingNotation);
         for (int i = 0; i < boardDim; i++) {
             for (int j = 0; j < boardDim; j++) {
                 if (board[i][j] != null && board[i][j].getFullName().equals(kingNotation)) {
@@ -179,9 +191,24 @@ public class Board {
     }
 
     public void movePiece(int i1, int j1, int i2, int j2) {
-        board[i2][j2] = board[i1][j1];
-        board[i1][j1] = null;
-        board[i2][j2].setHasMoved();
+        if (board[i1][j1] != null && ((i1 != i2) || (j1 != j2))) {
+            board[i2][j2] = board[i1][j1];
+            board[i1][j1] = null;
+            board[i2][j2].setHasMoved();
+        }
+    }
+
+    public Piece[][] getBoardCopy() {
+        Piece[][] array = new Piece[boardDim][];
+        for (int i = 0; i < boardDim; i++) {
+            array[i] = board[i].clone();
+        }
+        return array;
+
+    }
+
+    public void setBoard(Piece[][] array) {
+        board = array;
     }
 
     public int getBoardDim() {
@@ -190,6 +217,13 @@ public class Board {
 
     public Piece pieceAt(int i, int j) {
         return board[i][j];
+    }
+
+    public String pieceNameAt(int i, int j) {
+        if (board[i][j] != null) {
+            return board[i][j].getFullName();
+        }
+        return "-";
     }
 
     public void printBoard() {
@@ -204,5 +238,4 @@ public class Board {
             }
         }
     }
-
 }

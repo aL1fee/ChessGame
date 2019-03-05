@@ -1,5 +1,7 @@
 package com.chessgame;
 
+import com.chessgame.GUI.Window;
+import com.chessgame.Utils.BoardHistory;
 import com.chessgame.agents.HumanPlayer;
 import com.chessgame.agents.Player;
 
@@ -13,6 +15,8 @@ public class Game {
     private Player currentTurnPlayer;
     private Player whitePlayer;
     private Player blackPlayer;
+    private BoardHistory boardHist;
+    private Window window;
     private HashMap<Character, Integer> notationMap;
     private Scanner sc;
 
@@ -21,9 +25,11 @@ public class Game {
     public Game() {
         board = new Board();
         sc = new Scanner(System.in);
+        boardHist = new BoardHistory(board.getBoardCopy());
         whitePlayer = new HumanPlayer("white", sc);
         blackPlayer = new HumanPlayer("black", sc);
         currentTurnPlayer = whitePlayer;
+        window = new Window(board);
         gameFinished = false;
         notationMap = new HashMap<>();
         initNotationMap();
@@ -44,8 +50,6 @@ public class Game {
         notationMap.put('h', 7);
     }
 
-
-
     public void parseCommand(String command) {
         if (command.length() == 4) {
             int j1 = notationMap.get(command.charAt(0));
@@ -63,7 +67,11 @@ public class Game {
                 if (currentPiece != null && currentPiece.getColor().equals(currentTurnPlayer.getColor())) {
                     if (board.isPossibleMove(i1, j1, parsedCommand)) {
                         board.movePiece(i1, j1, i2, j2);
+                        /* Update the board history. */
+                        boardHist.addBoard(board.getBoardCopy());
+                        /* Checking if the king is under attack. */
                         if (board.isKingAttacked(currentTurnPlayer.getColor())) {
+                            board.setBoard(boardHist.getPrevious());
                             System.out.println("The king is under attack, try another move.");
                         }
                         switchCurrentPlayer();
@@ -75,25 +83,48 @@ public class Game {
                 System.out.println("Incorrect indexes, try again.");
             }
         } else {
-            System.out.println("Invalid command, try again.");
+            switch (command) {
+                /* Load the previous board. */
+                case "b":
+                    if (boardHist.getPrevious() != null) {
+                        board.setBoard(boardHist.getPrevious());
+                    }
+                    break;
+                /* Load the next board if such exists. */
+                case "f":
+                    if (boardHist.getNext() != null) {
+                        board.setBoard(boardHist.getNext());
+                    }
+                    break;
+                case "p":
+                    boardHist.printAllBoards();
+                    break;
+                case "flip_board":
+                    board.flipBoard();
+                    board.printBoard();
+                default:
+                    System.out.println();
+                    System.out.println("Invalid command, try again.");
+                    break;
+            }
         }
 
         board.printBoard();
     }
 
-    public void startTheGame() {
+    private void startTheGame() {
         board.printBoard();
     }
 
-    public boolean isGameFinished() {
+    private boolean isGameFinished() {
         return gameFinished;
     }
 
-    public Player getCurrentTurnPlayer() {
+    private Player getCurrentTurnPlayer() {
         return currentTurnPlayer;
     }
 
-    public Board getBoard() {
+    private Board getBoard() {
         return board;
     }
 
@@ -101,6 +132,7 @@ public class Game {
         Game game = new Game();
         game.startTheGame();
         while (!game.isGameFinished()) {
+            System.out.println();
             System.out.println();
             System.out.println(game.getCurrentTurnPlayer().getColor() + " player's turn");
 
