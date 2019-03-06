@@ -2,7 +2,9 @@ package com.chessgame.agents;
 
 import com.chessgame.Board;
 
-public abstract class Player {
+import java.io.Serializable;
+
+public abstract class Player implements Serializable {
 
     private final String color;
 

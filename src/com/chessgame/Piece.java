@@ -1,8 +1,9 @@
 package com.chessgame;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public abstract class Piece {
+public abstract class Piece implements Serializable {
     private final String name;
     private final String side;
     private final boolean scalableMoves;

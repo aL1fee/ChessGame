@@ -4,19 +4,28 @@ import com.chessgame.pieces.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
-public class Board {
+public class Board implements Serializable {
+
+    public int boardDim;
 
     private Piece[][] board;
-    public static int boardDim;
+    private String lastMove;
+    private HashMap<Character, Integer> notationMap;
 
     public Board() {
         boardDim = 8;
         board = new Piece[boardDim][boardDim];
+        lastMove = "";
+        notationMap = new HashMap<>();
+
         initializeBoard();
+        initNotationMap();
     }
 
     private void initializeBoard() {
@@ -105,9 +114,9 @@ public class Board {
                     case 'f':
                         /* Pawn direction check #1. */
                         if (movingPiece.getColor().equals("white")) {
-                            newMoveY += 1;
-                        } else {
                             newMoveY -= 1;
+                        } else {
+                            newMoveY += 1;
                         }
                         break;
                     case 'r':
@@ -116,9 +125,9 @@ public class Board {
                     case 'b':
                         /* Pawn direction check #2. */
                         if (movingPiece.getColor().equals("white")) {
-                            newMoveY -= 1;
-                        } else {
                             newMoveY += 1;
+                        } else {
+                            newMoveY -= 1;
                         }
                         break;
                     case 'l':
@@ -128,18 +137,27 @@ public class Board {
             }
             int newScaX = newMoveX;
             int newScaY = newMoveY;
+            boolean scalPieceEncounteredFirstEnemy = false;
             while ((j1 + newScaX) >= 0 && (j1 + newScaX) < boardDim &&
                     (i1 + newScaY) >= 0 && (i1 + newScaY) < boardDim) {
-
-
-
+                /* Making sure a piece doesn't jump over enemy pieces. */
+                if (scalPieceEncounteredFirstEnemy) {
+                    break;
+                }
                 /* Another piece occupies the intended location. */
                 if (board[i1 + newScaY][j1 + newScaX] != null) {
                     if (movingPiece.getSide().equals(board[i1 + newScaY][j1 + newScaX].getSide())) {
                         break;
+                    } else {
+                        scalPieceEncounteredFirstEnemy = true;
                     }
+                    /* Pawn can't pass forward if there is another piece. . */
+                    if (movingPiece.getName().equals("p") && (Math.abs(newScaY) ^ Math.abs(newScaX)) == 1) {
+                        break;
+                    }
+                }
                 /* Pawn eating. */
-                } else if (movingPiece.getName().equals("p") && (Math.abs(newScaY) == 1 && Math.abs(newScaX) == 1)) {
+                else if (movingPiece.getName().equals("p") && (Math.abs(newScaY) == 1 && Math.abs(newScaX) == 1)) {
                     break;
                 }
 
@@ -158,7 +176,7 @@ public class Board {
 
     public boolean isKingAttacked(String color) {
         String kingNotation = (color.equals("white") ? "w" : "b") + "k";
-        System.out.println(kingNotation);
+//        System.out.println(kingNotation);
         for (int i = 0; i < boardDim; i++) {
             for (int j = 0; j < boardDim; j++) {
                 if (board[i][j] != null && board[i][j].getFullName().equals(kingNotation)) {
@@ -191,11 +209,28 @@ public class Board {
     }
 
     public void movePiece(int i1, int j1, int i2, int j2) {
+//        System.out.println("MOVING PIECE: " + i1 + " " + j1 + " " + i2 + " " + j2);
         if (board[i1][j1] != null && ((i1 != i2) || (j1 != j2))) {
+            /* Setting the last move string. */
+            String pos1X = Integer.toString(j1);
+            String pos1Y = Integer.toString(i1);
+            String pos2X = Integer.toString(j2);
+            String pos2Y = Integer.toString(i2);
+            String entireMoveString = pos1X + pos1Y;
+            if (board[i2][j2] != null) {
+                entireMoveString += "x";
+            }
+            entireMoveString += pos2X + pos2Y;
+            lastMove = entireMoveString;
+            /* Making the move. */
             board[i2][j2] = board[i1][j1];
             board[i1][j1] = null;
             board[i2][j2].setHasMoved();
         }
+    }
+
+    public String getLastMove() {
+        return lastMove;
     }
 
     public Piece[][] getBoardCopy() {
@@ -226,8 +261,19 @@ public class Board {
         return "-";
     }
 
+    private void initNotationMap() {
+        notationMap.put('a', 7);
+        notationMap.put('b', 6);
+        notationMap.put('c', 5);
+        notationMap.put('d', 4);
+        notationMap.put('e', 3);
+        notationMap.put('f', 2);
+        notationMap.put('g', 1);
+        notationMap.put('h', 0);
+    }
+
     public void printBoard() {
-        for (int i = boardDim - 1; i >= 0; i--) {
+        for (int i = 0; i < boardDim; i++) {
             System.out.println();
             for (int j = 0; j < boardDim; j++) {
                 if (board[i][j] != null) {

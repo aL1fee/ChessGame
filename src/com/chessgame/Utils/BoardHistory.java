@@ -2,17 +2,20 @@ package com.chessgame.Utils;
 
 import com.chessgame.Piece;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class BoardHistory {
+public class BoardHistory implements Serializable {
 
     private ArrayList<Piece[][]> boards;
     private int index;
+    private int boardDim;
 
     public BoardHistory(Piece[][] boardArray) {
         boards = new ArrayList<>();
         boards.add(boardArray);
         index = 0;
+        boardDim = 8;
     }
 
     public void addBoard(Piece[][] boardArray) {
@@ -20,15 +23,16 @@ public class BoardHistory {
         boards.add(index, boardArray);
     }
 
-    public Piece[][] getBoard(int i) {
-        index = i;
-        return boards.get(index);
-    }
+//    public Piece[][] getBoard(int i) {}
 
     public Piece[][] getPrevious() {
         if ((index - 1) >= 0) {
             index--;
-            return boards.get(index);
+            Piece[][] array = new Piece[boardDim][];
+            for (int i = 0; i < boardDim; i++) {
+                array[i] = boards.get(index)[i].clone();
+            }
+            return array;
         }
         System.out.println("No previous board exists.");
         return null;
