@@ -2,12 +2,14 @@ package com.chessgame;
 
 import com.chessgame.GUI.Window;
 import com.chessgame.Utils.BoardHistory;
-import com.chessgame.Utils.GameSerialization;
+import com.chessgame.Utils.GameState;
 import com.chessgame.agents.HumanPlayer;
 import com.chessgame.agents.Player;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class Game {
 
@@ -17,8 +19,11 @@ public class Game {
     private Player blackPlayer;
     private BoardHistory boardHist;
     private ArrayList<String> historyOfMoves;
+    private Window window;
 
     private boolean gameFinished;
+    private LinkedList<GameState> gameStateHistory;
+    private boolean boardRotated;
 
     public Game() {
         board = new Board();
@@ -29,7 +34,11 @@ public class Game {
         historyOfMoves = new ArrayList<>();
         gameFinished = false;
 
-        new Window(this);
+        boardRotated = false;
+
+        gameStateHistory = new LinkedList<>();
+
+        window = new Window(this);
     }
 
     private void switchCurrentPlayer() {
@@ -41,14 +50,37 @@ public class Game {
         String parsedCommand = Integer.toString(startY) + Integer.toString(startX) +
                 Integer.toString(endY) + Integer.toString(endX);
         if (currentPiece != null && currentPiece.getColor().equals(currentTurnPlayer.getColor())) {
-            if (board.isPossibleMove(startY, startX, parsedCommand)) {
-                board.movePiece(startY, startX, endY, endX);
+            if (board.isPossibleMove(startY, startX, parsedCommand, boardRotated)) {
+                if (board.isPromotionMove(startY, startX, parsedCommand)) {
+                    /* Pawn promotion move. */
+                    String[] promotionChoices = { "Knight", "Bishop", "Rook", "Queen" };
+                    String promotion = (String) JOptionPane.showInputDialog(window.getFrame(),
+                            "Choose your choice of promotion.",
+                            "Pawn promotion",
+                            JOptionPane.QUESTION_MESSAGE,
+                            null,
+                            promotionChoices,
+                            promotionChoices[0]);
+                    if (promotion == null) {
+                        return;
+                    }
+                    board.movePiece(startY, startX, endY, endX, promotion, boardRotated);
+                } else if (board.isCastleMove(startY, startX, parsedCommand, boardRotated)) {
+                    board.castleMove(startY, startX, parsedCommand, boardRotated);
+
+
+                    //implement
+
+                } else if (board.isIllegalKingMove(startY, startX, parsedCommand, boardRotated)) {
+                    return;
+                } else {
+                    board.movePiece(startY, startX, endY, endX, null, boardRotated);
+                }
                 historyOfMoves.add(board.getLastMove());
                 /* Update the board history. */
                 boardHist.addBoard(board.getBoardCopy());
                 /* Checking if the king is under attack. */
-//                board.printBoard();
-                if (board.isKingAttacked(currentTurnPlayer.getColor())) {
+                if (board.isKingAttacked(currentTurnPlayer.getColor(), boardRotated)) {
                     board.setBoard(boardHist.getPrevious());
                     historyOfMoves.remove(historyOfMoves.size() - 1);
                     System.out.println("The king is under attack, try another move.");
@@ -60,10 +92,6 @@ public class Game {
             }
         }
         printHistoryOfMoves();
-//        System.out.println("============================");
-//        board.printBoard();
-//        System.out.println();
-//        System.out.println("============================");
     }
 
     private void startTheGame() {
@@ -79,23 +107,38 @@ public class Game {
     }
 
     private void printHistoryOfMoves() {
+        int temp = 0;
         int count = 1;
         System.out.println();
         System.out.println();
         for (String i : historyOfMoves) {
-            System.out.print(count + ". " + i + " ");
-            count++;
+            if (temp % 2 == 0) {
+                System.out.print(count + ". " + i + " ");
+                count++;
+            } else {
+                System.out.print(" " + i + " ");
+            }
+            temp++;
         }
     }
 
     public String getHistoryOfMoves() {
         String allMoves = "";
         int count = 1;
+        int temp = 1;
         System.out.println();
         System.out.println();
         for (String i : historyOfMoves) {
-            allMoves += count + ". " + i + " ";
-            count++;
+            if (temp % 2 != 0) {
+                allMoves += count + ". " + i + " ";
+            } else {
+                allMoves += " " + i + " ";
+                count++;
+            }
+            if (temp % 3 == 0 && temp != 0) {
+                allMoves += "\n";
+            }
+            temp++;
         }
         return allMoves;
     }
@@ -104,8 +147,43 @@ public class Game {
         return board;
     }
 
-    public void setNextLineHistoryOfMoves() {
-        historyOfMoves.add("\n");
+    public void rotateTheBoard() {
+        int boardDim = 8;
+        ArrayList<Piece[][]> newBoardHist = new ArrayList<>();
+        for (Piece[][] b : boardHist.getAll()) {
+            Piece[][] newBoard = new Piece[boardDim][boardDim];
+            for (int i = 0; i < boardDim; i++) {
+                for (int j = 0; j < boardDim; j++) {
+                    newBoard[i][j] = b[boardDim - i - 1][boardDim - j - 1];
+                }
+            }
+            newBoardHist.add(newBoard);
+        }
+
+        boardHist.setBoards(newBoardHist);
+        boardRotated = !boardRotated;
+
+        String lastMove = "";
+        if (historyOfMoves.size() != 0) {
+            lastMove = historyOfMoves.get(historyOfMoves.size() - 1);
+        }
+        this.board = new Board(boardHist.getCurrent(), lastMove, false);
+
+//        board.rotateBoard();
+    }
+
+    public void undoMove() {
+        if (historyOfMoves.size() > 0) {
+            String lastMove = "";
+            /* Handling the moves text. */
+            if (historyOfMoves.size() != 0) {
+                lastMove = historyOfMoves.get(historyOfMoves.size() - 1);
+            }
+            /* Updating the state of the game. */
+            this.board = new Board(boardHist.getPrevious(), lastMove, false);
+            historyOfMoves.remove(historyOfMoves.size() - 1);
+            switchCurrentPlayer();
+        }
     }
 
     public void newGame() {
@@ -118,9 +196,26 @@ public class Game {
         gameFinished = false;
     }
 
+    public void newGame(String color) {
+
+        // implement AI Colors
+
+        board = new Board();
+        boardHist = new BoardHistory(board.getBoardCopy());
+        whitePlayer = new HumanPlayer("white");
+        blackPlayer = new HumanPlayer("black");
+        if (color.equals("white")) {
+            currentTurnPlayer = whitePlayer;
+        } else {
+            currentTurnPlayer = blackPlayer;
+        }
+        historyOfMoves = new ArrayList<>();
+        gameFinished = false;
+    }
+
     public void serialize(String filePath) {
 
-        GameSerialization gS = new GameSerialization(board, currentTurnPlayer, whitePlayer, blackPlayer,
+        GameState gS = new GameState(board, currentTurnPlayer, whitePlayer, blackPlayer,
                 boardHist, historyOfMoves, gameFinished);
         try {
             FileOutputStream file = new FileOutputStream(filePath);
@@ -136,12 +231,12 @@ public class Game {
     }
 
     public void deserialize(String filePath) {
-        GameSerialization gS = null;
+        GameState gS = null;
         try {
             FileInputStream file = new FileInputStream(filePath);
             ObjectInputStream in = new ObjectInputStream(file);
 
-            gS = (GameSerialization) in.readObject();
+            gS = (GameState) in.readObject();
 
             in.close();
             file.close();
@@ -154,16 +249,18 @@ public class Game {
         }
 
         if (gS != null) {
-            this.board = gS.getBoard();
-            this.currentTurnPlayer = gS.getCurrentTurnPlayer();
-            this.whitePlayer = gS.getWhitePlayer();
-            this.blackPlayer = gS.getBlackPlayer();
-            this.boardHist = gS.getBoardHist();
-            this.historyOfMoves = gS.getHistoryOfMoves();
-            this.gameFinished = gS.isGameFinished();
+            setGameState(gS);
         }
+    }
 
-
+    private void setGameState(GameState gS) {
+        this.board = gS.getBoard();
+        this.currentTurnPlayer = gS.getCurrentTurnPlayer();
+        this.whitePlayer = gS.getWhitePlayer();
+        this.blackPlayer = gS.getBlackPlayer();
+        this.boardHist = gS.getBoardHist();
+        this.historyOfMoves = gS.getHistoryOfMoves();
+        this.gameFinished = gS.isGameFinished();
     }
 
     public static void main(String[] args) {

@@ -21,7 +21,6 @@ class MyPanel extends JPanel {
     private int initialFigurePosY;
     private int squareSize;
 
-    private JLabel historyOfMovesText;
     private JFrame frame;
     private String figuresPngFilepath;
     private Game game;
@@ -36,12 +35,8 @@ class MyPanel extends JPanel {
         figuresPngFilepath = "././res/chess_pieces.png";
 
 
-
         this.frame = frame;
         this.game = game;
-
-
-        initTextHistoryOfMoves();
 
         addMouseMotionListener(new MouseMotionListener() {
             @Override
@@ -95,7 +90,6 @@ class MyPanel extends JPanel {
                         finalFigurePosY >= 0 && finalFigurePosY < boardDim &&
                         x > offsetX && x < offsetX + 400 && y > offsetY && y < offsetY + 400) {
                     game.parseCommand(initialFigurePosX, initialFigurePosY, finalFigurePosX, finalFigurePosY);
-                    updateHistoryOfMovesText();
                     repaint();
                 }
             }
@@ -111,9 +105,11 @@ class MyPanel extends JPanel {
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+
+        g.drawString("Moves:", 560, 60);
         drawBoard(g);
         drawFigures(g);
-//        g.drawString("This is my custom Panel!", 10, 20);
+        drawHistoryOfMoves(g);
     }
 
     private void drawBoard(Graphics g) {
@@ -205,30 +201,28 @@ class MyPanel extends JPanel {
                 }
             }
         }
+
+        /* Adding a board border. */
+        Graphics2D g2 = (Graphics2D) g;
+        Stroke oldStroke = g2.getStroke();
+        g2.setStroke(new BasicStroke(1));
+        g.setColor(Color.BLACK);
+        g2.drawRect(75, 50, 400, 400);
+        g2.setStroke(oldStroke);
     }
 
-    private void initTextHistoryOfMoves() {
-        int offsetX = 75;
-        int offsetY = 50;
-        int boardSize = 400;
-        historyOfMovesText = new JLabel("");
-
-        historyOfMovesText.setBounds(100, 100, 200, 200);
-        setLayout(null);
-
-        this.add(historyOfMovesText);
-    }
-
-    public void updateHistoryOfMovesText() {
+    public void drawHistoryOfMoves(Graphics g) {
         String movesString = game.getHistoryOfMoves();
         System.out.println(movesString);
-        movesString = "<html>" + movesString;
-//        if (movesString.length()  > 10) {
-//            game.setNextLineHistoryOfMoves();
-//        }
-        movesString += "</html>";
-        historyOfMovesText.setText(movesString);
-//        historyOfMovesText.setBounds(boardSize, boardSize, 100, 100);
+
+        g.setColor(Color.BLACK);
+//        g.setFont(new Font("TimesRoman", Font.PLAIN, 14));
+
+        int x = 505;
+        int y = 75;
+        for (String line : movesString.split("\n")) {
+            g.drawString(line, x, y += g.getFontMetrics().getHeight());
+        }
 
     }
 }

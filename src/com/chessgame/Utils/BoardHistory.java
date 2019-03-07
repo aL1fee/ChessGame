@@ -12,39 +12,60 @@ public class BoardHistory implements Serializable {
     private int boardDim;
 
     public BoardHistory(Piece[][] boardArray) {
-        boards = new ArrayList<>();
-        boards.add(boardArray);
         index = 0;
         boardDim = 8;
+        boards = new ArrayList<>();
+        boards.add(boardArray);
     }
 
     public void addBoard(Piece[][] boardArray) {
         index++;
-        boards.add(index, boardArray);
+        boards.add(boardArray);
     }
 
-//    public Piece[][] getBoard(int i) {}
+    public Piece[][] getCurrent() {
+        Piece[][] copyArray = new Piece[boardDim][boardDim];
+        try {
+            for (int i = 0; i < boardDim; i++) {
+                for (int j = 0; j < boardDim; j++) {
+                    if (boards.get(boards.size() - 1)[i][j] == null) {
+                        boards.get(boards.size() - 1)[i][j] = null;
+                    } else {
+                        copyArray[i][j] = boards.get(boards.size() - 1)[i][j].clone();
+                    }
+                }
+            }
+        } catch (CloneNotSupportedException ex) {}
+        return copyArray;
+    }
 
     public Piece[][] getPrevious() {
         if ((index - 1) >= 0) {
+            boards.remove(index);
             index--;
-            Piece[][] array = new Piece[boardDim][];
-            for (int i = 0; i < boardDim; i++) {
-                array[i] = boards.get(index)[i].clone();
-            }
-            return array;
         }
-        System.out.println("No previous board exists.");
-        return null;
+        Piece[][] copyArray = new Piece[boardDim][boardDim];
+        try {
+            for (int i = 0; i < boardDim; i++) {
+                for (int j = 0; j < boardDim; j++) {
+                    if (boards.get(index)[i][j] == null) {
+                        boards.get(index)[i][j] = null;
+                    } else {
+                        copyArray[i][j] = boards.get(index)[i][j].clone();
+                    }
+                }
+            }
+        } catch (CloneNotSupportedException ex) {}
+        return copyArray;
     }
 
-    public Piece[][] getNext() {
-        if ((index + 1) < boards.size()) {
-            index++;
-            return boards.get(index);
-        }
-        System.out.println("No next board exists.");
-        return null;
+
+    public ArrayList<Piece[][]> getAll() {
+        return boards;
+    }
+
+    public void setBoards(ArrayList<Piece[][]> bds) {
+        boards = bds;
     }
 
     public void printAllBoards() {

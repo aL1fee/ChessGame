@@ -3,12 +3,11 @@ package com.chessgame;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public abstract class Piece implements Serializable {
+public abstract class Piece implements Serializable, Cloneable {
     private final String name;
     private final String side;
     private final boolean scalableMoves;
     private boolean hasMoved;
-    private ArrayList<String> plausibleMoves;
 
     public Piece(String name, String side, boolean scalableMoves) {
         this.name = name;
@@ -27,16 +26,26 @@ public abstract class Piece implements Serializable {
         return side + name;
     }
 
+    @Override
+    public Piece clone() throws CloneNotSupportedException {
+        Piece result = (Piece) super.clone();
+        return result;
+    }
+
     public String getSide() {
         return side;
+    }
+
+    public String getEnemySideFull() {
+        return side.equals("w") ? "black" : "white";
     }
 
     public String getColor() {
         return side.equals("b") ? "black" : "white";
     }
 
-    public void setHasMoved() {
-        hasMoved = true;
+    public void setHasMoved(boolean bool) {
+        hasMoved = bool;
     }
 
     public boolean isHasMoved() {

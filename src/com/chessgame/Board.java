@@ -5,10 +5,7 @@ import com.chessgame.pieces.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.InputMismatchException;
-import java.util.Scanner;
+import java.util.*;
 
 public class Board implements Serializable {
 
@@ -16,21 +13,38 @@ public class Board implements Serializable {
 
     private Piece[][] board;
     private String lastMove;
-    private HashMap<Character, Integer> notationMap;
+    private HashMap<Integer, Character> notationMap;
+    private HashSet<String> piecesMoved;
+    private String initialPositionFile;
+
 
     public Board() {
-        boardDim = 8;
-        board = new Piece[boardDim][boardDim];
-        lastMove = "";
-        notationMap = new HashMap<>();
+        this(new Piece[8][8], "", true);
+    }
 
-        initializeBoard();
+    public Board(Piece[][] board, String lastMove, boolean needInitTheBoard) {
+        boardDim = 8;
+        notationMap = new HashMap<>();
+        piecesMoved = new HashSet<>();
+        initialPositionFile = "././res/initialPosition.txt";
+        initialPositionFile = "././res/test_positon.txt";
+
+        this.board = board;
+        this.lastMove = lastMove;
+
+        if (needInitTheBoard) {
+            initializeBoard();
+        }
         initNotationMap();
+
     }
 
     private void initializeBoard() {
-        File initFile = new File("././res/initialPosition.txt");
+        File initFile = new File(initialPositionFile);
         try {
+
+            // catching exception
+
             Scanner sc = new Scanner(initFile);
             for (int i = 0; i < boardDim; i++) {
                 for (int j = 0; j < boardDim; j++) {
@@ -83,22 +97,22 @@ public class Board implements Serializable {
         }
     }
 
-    public void flipBoard() {
-        Piece[][] oldBoard = getBoardCopy();
-        Piece[][] newBoard = new Piece[boardDim][boardDim];
-        for (int i = 0; i < boardDim; i++) {
-            for (int j = 0; j < boardDim; j++) {
-                newBoard[i][j] = oldBoard[boardDim - i - 1][boardDim - j - 1];
-            }
-        }
-        board = newBoard;
+//    public void flipBoard() {
+//        Piece[][] oldBoard = getBoardCopy();
+//        Piece[][] newBoard = new Piece[boardDim][boardDim];
+//        for (int i = 0; i < boardDim; i++) {
+//            for (int j = 0; j < boardDim; j++) {
+//                newBoard[i][j] = oldBoard[boardDim - i - 1][boardDim - j - 1];
+//            }
+//        }
+//        board = newBoard;
+//    }
+
+    public boolean isPossibleMove(int i1, int j1, String command, boolean boardRotated) {
+        return getPossibleMoves(i1, j1, boardRotated).contains(command);
     }
 
-    public boolean isPossibleMove(int i1, int j1, String command) {
-        return getPossibleMoves(i1, j1).contains(command);
-    }
-
-    public ArrayList<String> getPossibleMoves(int i1, int j1) {
+    public ArrayList<String> getPossibleMoves(int i1, int j1, boolean boardRotated) {
         ArrayList<String> listOfAllMoves = new ArrayList<>();
         Piece movingPiece = board[i1][j1];
         /* No piece at this location. */
@@ -114,9 +128,11 @@ public class Board implements Serializable {
                     case 'f':
                         /* Pawn direction check #1. */
                         if (movingPiece.getColor().equals("white")) {
-                            newMoveY -= 1;
+                            newMoveY = (boardRotated) ? newMoveY + 1 : newMoveY - 1;
+//                            newMoveY -= 1;
                         } else {
-                            newMoveY += 1;
+                            newMoveY = (boardRotated) ? newMoveY - 1 : newMoveY + 1;
+//                            newMoveY += 1;
                         }
                         break;
                     case 'r':
@@ -125,8 +141,10 @@ public class Board implements Serializable {
                     case 'b':
                         /* Pawn direction check #2. */
                         if (movingPiece.getColor().equals("white")) {
+//                            newMoveY = (isBoardRotated) ? newMoveY - 1 : newMoveY + 1;
                             newMoveY += 1;
                         } else {
+//                            newMoveY = (isBoardRotated) ? newMoveY + 1 : newMoveY - 1;
                             newMoveY -= 1;
                         }
                         break;
@@ -174,13 +192,94 @@ public class Board implements Serializable {
         return listOfAllMoves;
     }
 
-    public boolean isKingAttacked(String color) {
+
+    public boolean isPromotionMove(int i1, int j1, String command) {
+        Piece movingPiece = board[i1][j1];
+        /* No piece at this location. */
+
+//        System.out.println("A_______: " + command.charAt(0));
+//        System.out.println("A_______: " + command.charAt(1));
+//        System.out.println("A_______: " + command.charAt(2));
+//        System.out.println("A_______: " + command.charAt(3));
+        if (movingPiece.getName().equals("p") &&
+                (Integer.parseInt(String.valueOf(command.charAt(2))) == 7 ||
+                Integer.parseInt(String.valueOf(command.charAt(2))) == 0)) {
+            return true;
+        }
+        return false;
+    }
+
+
+    public void castleMove(int i1, int j1, String command, boolean boardRotated) {
+        int newY = Integer.parseInt(String.valueOf(command.charAt(2)));
+        int newX = Integer.parseInt(String.valueOf(command.charAt(3)));
+
+
+        // remove hardcode.
+
+        board[i1][j1].setHasMoved(true);
+        board[newY][newX] = board[i1][j1];
+        board[i1][j1] = null;
+        board[newY][newX + 1] = board[7][0];
+        board[7][0] = null;
+
+
+
+    }
+
+
+    public boolean isCastleMove(int i1, int j1, String command, boolean boardRotated) {
+        int newY = Integer.parseInt(String.valueOf(command.charAt(2)));
+        int newX = Integer.parseInt(String.valueOf(command.charAt(3)));
+        Piece movingPiece = board[i1][j1];
+
+
+        System.out.println("SYstem sadsad: " + i1 + " " + j1);
+        if (movingPiece.getName().equals("k") && !movingPiece.isHasMoved()) {
+            if (movingPiece.getColor().equals("white")) {
+                if (newX == 2 && newY == 7) {
+                    if (pieceAt(7, 0) == null) {
+                        return false;
+                    }
+                    if (pieceAt(7, 0).getFullName().equals("wr") &&
+                            !pieceAt(7, 0).isHasMoved()) {
+                        for (int i = 1; i < 3; i++) {
+                            if (isPositionAttacked(7, i, boardRotated)) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean isIllegalKingMove(int i1, int j1, String command, boolean boardRotated) {
+        int newY = Integer.parseInt(String.valueOf(command.charAt(2)));
+        int newX = Integer.parseInt(String.valueOf(command.charAt(3)));
+        Piece movingPiece = board[i1][j1];
+        if (movingPiece.getName().equals("k") && (Math.abs(newY - i1) + Math.abs(newX - j1)) > 1) {
+            return true;
+        }
+        return false;
+    }
+
+
+
+
+
+
+
+    public boolean isKingAttacked(String color, boolean boardRotated) {
         String kingNotation = (color.equals("white") ? "w" : "b") + "k";
-//        System.out.println(kingNotation);
+        System.out.println("PPPPPP: " + kingNotation);
         for (int i = 0; i < boardDim; i++) {
             for (int j = 0; j < boardDim; j++) {
                 if (board[i][j] != null && board[i][j].getFullName().equals(kingNotation)) {
-                    return isPositionAttacked(i, j);
+                    System.out.println("IIIIIII: " + isPositionAttacked(i, j, boardRotated));
+                    return isPositionAttacked(i, j, boardRotated);
                 }
             }
         }
@@ -188,12 +287,12 @@ public class Board implements Serializable {
         return false;
     }
 
-    public boolean isPositionAttacked(int i, int j) {
+    private boolean isPositionAttacked(int i, int j, boolean boardRotated) {
         for (int k = 0; k < boardDim; k++) {
             for (int l = 0; l < boardDim; l++) {
                 String possibleAttack = Integer.toString(k) + Integer.toString(l) +
                         Integer.toString(i) + Integer.toString(j);
-                if (getPossibleMoves(k, l).contains(possibleAttack)) {
+                if (getPossibleMoves(k, l, boardRotated).contains(possibleAttack)) {
                     /* If the attacking piece is a pawn. */
                     if (pieceAt(k, l).getName().equals("p")) {
                         if (Math.abs(i - k) + Math.abs(j - l) == 2) {
@@ -208,24 +307,67 @@ public class Board implements Serializable {
         return false;
     }
 
-    public void movePiece(int i1, int j1, int i2, int j2) {
+    public void movePiece(int i1, int j1, int i2, int j2, String promotion, boolean boardRotated) {
 //        System.out.println("MOVING PIECE: " + i1 + " " + j1 + " " + i2 + " " + j2);
         if (board[i1][j1] != null && ((i1 != i2) || (j1 != j2))) {
             /* Setting the last move string. */
-            String pos1X = Integer.toString(j1);
-            String pos1Y = Integer.toString(i1);
-            String pos2X = Integer.toString(j2);
-            String pos2Y = Integer.toString(i2);
-            String entireMoveString = pos1X + pos1Y;
-            if (board[i2][j2] != null) {
-                entireMoveString += "x";
+
+            String entireMoveString;
+
+            if (!boardRotated) {
+                String pos1Y = Integer.toString(boardDim - i1);
+                String pos2Y = Integer.toString(boardDim - i2);
+                entireMoveString = String.valueOf(notationMap.get(j1)) + pos1Y;
+                if (board[i2][j2] != null) {
+                    entireMoveString += "x";
+                } else {
+                    entireMoveString += "-";
+                }
+                entireMoveString += String.valueOf(notationMap.get(j2)) + pos2Y;
+            } else {
+                String pos1Y = Integer.toString(i1 + 1);
+                String pos2Y = Integer.toString(i2 + 1);
+                entireMoveString = String.valueOf(notationMap.get(boardDim - j1 - 1)) + pos1Y;
+                if (board[i2][j2] != null) {
+                    entireMoveString += "x";
+                } else {
+                    entireMoveString += "-";
+                }
+                entireMoveString += String.valueOf(notationMap.get(boardDim - j2 - 1)) + pos2Y;
             }
-            entireMoveString += pos2X + pos2Y;
-            lastMove = entireMoveString;
+
             /* Making the move. */
-            board[i2][j2] = board[i1][j1];
-            board[i1][j1] = null;
-            board[i2][j2].setHasMoved();
+            if (promotion != null) {
+                String side = board[i1][j1].getSide();
+                board[i1][j1] = null;
+                switch (promotion) {
+                    case "Knight":
+                        board[i2][j2] = new Knight("n", side, false);
+                        break;
+                    case "Bishop":
+                        board[i2][j2] = new Bishop("b", side, true);
+                        break;
+                    case "Rook":
+                        board[i2][j2] = new Rook("r", side, true);
+                        break;
+                    case "Queen":
+                        board[i2][j2] = new Queen("q", side, true);
+                        break;
+                }
+            } else {
+                board[i2][j2] = board[i1][j1];
+                board[i1][j1] = null;
+                board[i2][j2].setHasMoved(true);
+            }
+
+
+            /* Seeing if that was a check. */
+            if (isKingAttacked(pieceAt(i2, j2).getEnemySideFull(), boardRotated)) {
+                entireMoveString += "+";
+            }
+            lastMove = entireMoveString;
+
+
         }
     }
 
@@ -234,17 +376,36 @@ public class Board implements Serializable {
     }
 
     public Piece[][] getBoardCopy() {
-        Piece[][] array = new Piece[boardDim][];
-        for (int i = 0; i < boardDim; i++) {
-            array[i] = board[i].clone();
-        }
+        Piece[][] array = new Piece[boardDim][boardDim];
+        try {
+            for (int i = 0; i < boardDim; i++) {
+                for (int j = 0; j < boardDim; j++) {
+                    if (board[i][j] == null) {
+                        array[i][j] = null;
+                    } else {
+                        array[i][j] = board[i][j].clone();
+                    }
+                }
+            }
+        } catch (CloneNotSupportedException ex) {}
         return array;
 
     }
 
+//    public void rotateBoard() {
+//        Piece[][] newBoard = new Piece[boardDim][boardDim];
+//        for (int i = 0; i < boardDim; i++) {
+//            for (int j = 0; j < boardDim; j++) {
+//                newBoard[i][j] = board[boardDim - i - 1][boardDim - j - 1];
+//            }
+//        }
+//        board = newBoard;
+//    }
+
     public void setBoard(Piece[][] array) {
         board = array;
     }
+
 
     public int getBoardDim() {
         return boardDim;
@@ -262,14 +423,14 @@ public class Board implements Serializable {
     }
 
     private void initNotationMap() {
-        notationMap.put('a', 7);
-        notationMap.put('b', 6);
-        notationMap.put('c', 5);
-        notationMap.put('d', 4);
-        notationMap.put('e', 3);
-        notationMap.put('f', 2);
-        notationMap.put('g', 1);
-        notationMap.put('h', 0);
+        notationMap.put(0, 'a');
+        notationMap.put(1, 'b');
+        notationMap.put(2, 'c');
+        notationMap.put(3, 'd');
+        notationMap.put(4, 'e');
+        notationMap.put(5, 'f');
+        notationMap.put(6, 'g');
+        notationMap.put(7, 'h');
     }
 
     public void printBoard() {

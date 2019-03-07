@@ -48,12 +48,36 @@ public class Window extends JPanel {
     private void createMenu() {
         menuBar = new JMenuBar();
         JMenu menu = new JMenu("File");
-        JMenuItem m1_1 = new JMenuItem("New game");
+
+        JMenu subMenu = new JMenu("New game");
+
+        JMenuItem m1_1_1 = new JMenuItem("Play against AI");
+        JMenuItem m1_1_2 = new JMenuItem("Play against a human");
+        subMenu.add(m1_1_1);
+        subMenu.add(m1_1_2);
+
         JMenuItem m1_2 = new JMenuItem("Load");
         JMenuItem m1_3 = new JMenuItem("Save");
         JMenuItem m1_4 = new JMenuItem("Quit");
 
-        m1_1.addActionListener(new ActionListener() {
+        m1_1_1.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String[] colorChoice = { "white", "black"};
+                String color = (String) JOptionPane.showInputDialog(frame,
+                        "Choose color.",
+                        "Color choosing",
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        colorChoice,
+                        colorChoice[0]);
+
+                game.newGame(color);
+                myPanel.repaint();
+            }
+        });
+
+        m1_1_2.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 game.newGame();
@@ -65,13 +89,10 @@ public class Window extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String message = JOptionPane.showInputDialog(frame, "Enter the file name.",
-                        "Loading the game.", JOptionPane.INFORMATION_MESSAGE);
+                        "Loading the game", JOptionPane.INFORMATION_MESSAGE);
                 game.deserialize(gameSavesPath + message);
 
                 myPanel.repaint();
-                myPanel.updateHistoryOfMovesText();
-
-
             }
         });
 
@@ -81,14 +102,10 @@ public class Window extends JPanel {
 
 
                 String message = JOptionPane.showInputDialog(frame, "Enter the file name.",
-                        "Saving the game.", JOptionPane.INFORMATION_MESSAGE);
+                        "Saving the game", JOptionPane.INFORMATION_MESSAGE);
                 System.out.println(message);
                 // check for filename!
                 game.serialize(gameSavesPath + message);
-
-
-
-
 
             }
         });
@@ -99,33 +116,51 @@ public class Window extends JPanel {
             }
         });
 
-        menu.add(m1_1);
+        menu.add(subMenu);
         menu.add(m1_2);
         menu.add(m1_3);
         menu.add(m1_4);
         menuBar.add(menu);
 
-        JMenu menu2 = new JMenu("Settings");
-        JMenuItem m2_1 = new JMenuItem("AI difficulty");
-        JMenuItem m2_2 = new JMenuItem("Rotate the board");
+        JMenu menu2 = new JMenu("Edit");
+        JMenuItem m2_1 = new JMenuItem("Undo a move");
         menu2.add(m2_1);
-        menu2.add(m2_2);
-
         m2_1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("Not implemented yet.");
+                game.undoMove();
+                frame.repaint();
             }
         });
+        menuBar.add(menu2);
 
-        m2_2.addActionListener(new ActionListener() {
+
+        JMenu menu3 = new JMenu("Settings");
+        JMenuItem m3_1 = new JMenuItem("AI difficulty");
+        JMenuItem m3_2 = new JMenuItem("Rotate the board");
+        menu3.add(m3_1);
+        menu3.add(m3_2);
+
+        m3_1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 System.out.println("Not implemented yet.");
             }
         });
 
-        menuBar.add(menu2);
+        m3_2.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                game.rotateTheBoard();
+                myPanel.repaint();
+            }
+        });
 
+        menuBar.add(menu3);
+
+    }
+
+    public JFrame getFrame() {
+        return frame;
     }
 }

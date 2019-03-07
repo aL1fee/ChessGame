@@ -6,7 +6,7 @@ import com.chessgame.agents.Player;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public class GameSerialization implements Serializable {
+public class GameState implements Serializable {
 
     private Board board;
     private Player currentTurnPlayer;
@@ -16,8 +16,8 @@ public class GameSerialization implements Serializable {
     private ArrayList<String> historyOfMoves;
     private boolean gameFinished;
 
-    public GameSerialization(Board board, Player currentTurnPlayer, Player whitePlayer, Player blackPlayer,
-                             BoardHistory boardHist, ArrayList<String> historyOfMoves, boolean gameFinished) {
+    public GameState(Board board, Player currentTurnPlayer, Player whitePlayer, Player blackPlayer,
+                     BoardHistory boardHist, ArrayList<String> historyOfMoves, boolean gameFinished) {
         this.board = board;
         this.currentTurnPlayer = currentTurnPlayer;
         this.whitePlayer = whitePlayer;
