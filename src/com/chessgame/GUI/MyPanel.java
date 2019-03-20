@@ -80,16 +80,25 @@ class MyPanel extends JPanel {
                 int finalFigurePosX = (x - offsetX) / squareSize;
                 int finalFigurePosY  = (y - offsetY) / squareSize;
 
-//                System.out.println("finalFigurePosX: " + finalFigurePosX);
-//                System.out.println("finalFigurePosY: " + finalFigurePosY);
-//                System.out.println("X: " + x + " and Y: " + y);
+
+//                System.out.println();
+//                System.out.println("===================================");
+//                System.out.println("startX: " + initialFigurePosX);
+//                System.out.println("startY: " + initialFigurePosY);
+//                System.out.println("endX: " + finalFigurePosX);
+//                System.out.println("endY: " + finalFigurePosY);
+//                System.out.println("===================================");
+//                System.out.println();
+
 
                 if (initialFigurePosX >= 0 && initialFigurePosX < boardDim &&
                         initialFigurePosY >= 0 && initialFigurePosY < boardDim &&
                         finalFigurePosX >= 0 && finalFigurePosX < boardDim &&
                         finalFigurePosY >= 0 && finalFigurePosY < boardDim &&
-                        x > offsetX && x < offsetX + 400 && y > offsetY && y < offsetY + 400) {
-                    game.parseCommand(initialFigurePosX, initialFigurePosY, finalFigurePosX, finalFigurePosY);
+                        x > offsetX && x < offsetX + 400 && y > offsetY && y < offsetY + 400 &&
+                        !game.getCurrentPlayer().isAI()) {
+                    game.getCurrentPlayer().makeMove(game, initialFigurePosX, initialFigurePosY, finalFigurePosX, finalFigurePosY);
+//                    game.parseCommand(initialFigurePosX, initialFigurePosY, finalFigurePosX, finalFigurePosY);
                     repaint();
                 }
             }

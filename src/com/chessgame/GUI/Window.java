@@ -73,6 +73,9 @@ public class Window extends JPanel {
                         colorChoice[0]);
 
                 game.newGame(color);
+                if (color.equals("black")) {
+                    game.rotateTheBoard();
+                }
                 myPanel.repaint();
             }
         });

@@ -1,6 +1,6 @@
 package com.chessgame.agents;
 
-import com.chessgame.Board;
+import com.chessgame.Game;
 
 import java.io.Serializable;
 
@@ -8,7 +8,11 @@ public abstract class Player implements Serializable {
 
     private final String color;
 
-    public abstract String makeMove(Board board);
+    public abstract void makeMove(Game game, int startX, int startY, int endX, int endY);
+
+    public abstract void makeMove(Game game);
+
+    public abstract boolean isAI();
 
     public Player(String color) {
         this.color = color;

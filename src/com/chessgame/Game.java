@@ -3,6 +3,7 @@ package com.chessgame;
 import com.chessgame.GUI.Window;
 import com.chessgame.Utils.BoardHistory;
 import com.chessgame.Utils.GameState;
+import com.chessgame.agents.AIPlayer;
 import com.chessgame.agents.HumanPlayer;
 import com.chessgame.agents.Player;
 
@@ -10,6 +11,8 @@ import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Game {
 
@@ -21,6 +24,8 @@ public class Game {
     private ArrayList<String> historyOfMoves;
     private Window window;
 
+    private Timer timer;
+
     private boolean gameFinished;
     private LinkedList<GameState> gameStateHistory;
     private boolean boardRotated;
@@ -29,7 +34,7 @@ public class Game {
         board = new Board();
         boardHist = new BoardHistory(board.getBoardCopy());
         whitePlayer = new HumanPlayer("white");
-        blackPlayer = new HumanPlayer("black");
+        blackPlayer = new AIPlayer("black", board);
         currentTurnPlayer = whitePlayer;
         historyOfMoves = new ArrayList<>();
         gameFinished = false;
@@ -37,6 +42,9 @@ public class Game {
         boardRotated = false;
 
         gameStateHistory = new LinkedList<>();
+
+
+        timer = new Timer();
 
         window = new Window(this);
     }
@@ -46,6 +54,7 @@ public class Game {
     }
 
     public void parseCommand(int startX, int startY, int endX, int endY) {
+//        System.out.println("Z: " + startX + "" + startY + "" + endX + "" + endY);
         Piece currentPiece = board.pieceAt(startY, startX);
         String parsedCommand = Integer.toString(startY) + Integer.toString(startX) +
                 Integer.toString(endY) + Integer.toString(endX);
@@ -65,15 +74,17 @@ public class Game {
                         return;
                     }
                     board.movePiece(startY, startX, endY, endX, promotion, boardRotated);
-                } else if (board.isCastleMove(startY, startX, parsedCommand, boardRotated)) {
-                    board.castleMove(startY, startX, parsedCommand, boardRotated);
+                }
 
-
-                    //implement
-
-                } else if (board.isIllegalKingMove(startY, startX, parsedCommand, boardRotated)) {
-                    return;
-                } else {
+//                else if (board.isCastleMove(startY, startX, parsedCommand, boardRotated)) {
+//                    board.castleMove(startY, startX, parsedCommand, boardRotated);
+//
+//
+//                    //implement
+//
+//                } else if (board.isIllegalKingMove(startY, startX, parsedCommand, boardRotated)) {
+//                    return;
+                else {
                     board.movePiece(startY, startX, endY, endX, null, boardRotated);
                 }
                 historyOfMoves.add(board.getLastMove());
@@ -86,17 +97,36 @@ public class Game {
                     System.out.println("The king is under attack, try another move.");
                 } else {
                     switchCurrentPlayer();
+                    if (currentTurnPlayer.isAI()) {
+                        Game g = this;
+                        timer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                currentTurnPlayer.makeMove(g);
+                                window.getFrame().repaint();
+                            }
+                        }, 0);
+
+                    }
                 }
             } else {
                 System.out.println("Incorrect move, try again.");
             }
         }
-        printHistoryOfMoves();
+
+
+
+//        if (currentTurnPlayer.isAI()) {
+//            currentTurnPlayer.makeMove(this);
+//            switchCurrentPlayer();
+//        }
+
+//        printHistoryOfMoves();
     }
 
-    private void startTheGame() {
-        board.printBoard();
-    }
+//    private void startTheGame() {
+//        board.printBoard();
+//    }
 
     private boolean isGameFinished() {
         return gameFinished;
@@ -202,15 +232,26 @@ public class Game {
 
         board = new Board();
         boardHist = new BoardHistory(board.getBoardCopy());
-        whitePlayer = new HumanPlayer("white");
-        blackPlayer = new HumanPlayer("black");
         if (color.equals("white")) {
-            currentTurnPlayer = whitePlayer;
+            whitePlayer = new HumanPlayer("white");
+            blackPlayer = new AIPlayer("black", board);
         } else {
-            currentTurnPlayer = blackPlayer;
+            whitePlayer = new AIPlayer("white", board);
+            blackPlayer = new HumanPlayer("black");
         }
+        currentTurnPlayer = whitePlayer;
         historyOfMoves = new ArrayList<>();
         gameFinished = false;
+        if (currentTurnPlayer.isAI()) {
+            Game g = this;
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    currentTurnPlayer.makeMove(g);
+                    window.getFrame().repaint();
+                }
+            }, 1500);
+        }
     }
 
     public void serialize(String filePath) {
@@ -263,11 +304,24 @@ public class Game {
         this.gameFinished = gS.isGameFinished();
     }
 
+    public Player getCurrentPlayer() {
+        return currentTurnPlayer;
+    }
+
+    public boolean isBoardRotated() {
+        return boardRotated;
+    }
+
+    public void makeRandomMove() {
+        String move = board.getRandomMove(currentTurnPlayer.getColor(), boardRotated);
+        if (move != null) {
+            parseCommand(Character.getNumericValue(move.charAt(1)), Character.getNumericValue(move.charAt(0)),
+                    Character.getNumericValue(move.charAt(3)), Character.getNumericValue(move.charAt(2)));
+        }
+    }
+
     public static void main(String[] args) {
+        /* Starting a new game. */
         Game game = new Game();
-        game.startTheGame();
-//        while (!game.isGameFinished()) {
-//
-//        }
     }
 }

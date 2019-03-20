@@ -19,8 +19,8 @@ public class King extends Piece {
         possibleMoves.add("br");
         possibleMoves.add("b");
         possibleMoves.add("bl");
-        possibleMoves.add("ll");
-        possibleMoves.add("rr");
+//        possibleMoves.add("ll");
+//        possibleMoves.add("rr");
         return possibleMoves;
     }
 }

@@ -27,7 +27,7 @@ public class Board implements Serializable {
         notationMap = new HashMap<>();
         piecesMoved = new HashSet<>();
         initialPositionFile = "././res/initialPosition.txt";
-        initialPositionFile = "././res/test_positon.txt";
+//        initialPositionFile = "././res/test_positon.txt";
 
         this.board = board;
         this.lastMove = lastMove;
@@ -141,11 +141,11 @@ public class Board implements Serializable {
                     case 'b':
                         /* Pawn direction check #2. */
                         if (movingPiece.getColor().equals("white")) {
-//                            newMoveY = (isBoardRotated) ? newMoveY - 1 : newMoveY + 1;
-                            newMoveY += 1;
+                            newMoveY = (boardRotated) ? newMoveY - 1 : newMoveY + 1;
+//                            newMoveY += 1;
                         } else {
-//                            newMoveY = (isBoardRotated) ? newMoveY + 1 : newMoveY - 1;
-                            newMoveY -= 1;
+                            newMoveY = (boardRotated) ? newMoveY + 1 : newMoveY - 1;
+//                            newMoveY -= 1;
                         }
                         break;
                     case 'l':
@@ -170,9 +170,13 @@ public class Board implements Serializable {
                         scalPieceEncounteredFirstEnemy = true;
                     }
                     /* Pawn can't pass forward if there is another piece. . */
-                    if (movingPiece.getName().equals("p") && (Math.abs(newScaY) ^ Math.abs(newScaX)) == 1) {
+                    if (movingPiece.getName().equals("p") && ((Math.abs(newScaY) == 1 ||  Math.abs(newScaY) == 2) &&
+                            Math.abs(newMoveX) == 0)) {
                         break;
                     }
+//                    if (movingPiece.getName().equals("p") && (Math.abs(newScaY) ^ Math.abs(newScaX)) == 1) {
+//                        break;
+//                    }
                 }
                 /* Pawn eating. */
                 else if (movingPiece.getName().equals("p") && (Math.abs(newScaY) == 1 && Math.abs(newScaX) == 1)) {
@@ -234,7 +238,7 @@ public class Board implements Serializable {
         Piece movingPiece = board[i1][j1];
 
 
-        System.out.println("SYstem sadsad: " + i1 + " " + j1);
+//        System.out.println("SYstem sadsad: " + i1 + " " + j1);
         if (movingPiece.getName().equals("k") && !movingPiece.isHasMoved()) {
             if (movingPiece.getColor().equals("white")) {
                 if (newX == 2 && newY == 7) {
@@ -244,7 +248,7 @@ public class Board implements Serializable {
                     if (pieceAt(7, 0).getFullName().equals("wr") &&
                             !pieceAt(7, 0).isHasMoved()) {
                         for (int i = 1; i < 3; i++) {
-                            if (isPositionAttacked(7, i, boardRotated)) {
+                            if (isPositionAttacked(7,i, boardRotated)) {
                                 return false;
                             }
                         }
@@ -274,11 +278,11 @@ public class Board implements Serializable {
 
     public boolean isKingAttacked(String color, boolean boardRotated) {
         String kingNotation = (color.equals("white") ? "w" : "b") + "k";
-        System.out.println("PPPPPP: " + kingNotation);
+//        System.out.println("PPPPPP: " + kingNotation);
         for (int i = 0; i < boardDim; i++) {
             for (int j = 0; j < boardDim; j++) {
                 if (board[i][j] != null && board[i][j].getFullName().equals(kingNotation)) {
-                    System.out.println("IIIIIII: " + isPositionAttacked(i, j, boardRotated));
+//                    System.out.println("IIIIIII: " + isPositionAttacked(i, j, boardRotated));
                     return isPositionAttacked(i, j, boardRotated);
                 }
             }
@@ -287,7 +291,7 @@ public class Board implements Serializable {
         return false;
     }
 
-    private boolean isPositionAttacked(int i, int j, boolean boardRotated) {
+    public boolean isPositionAttacked(int i, int j, boolean boardRotated) {
         for (int k = 0; k < boardDim; k++) {
             for (int l = 0; l < boardDim; l++) {
                 String possibleAttack = Integer.toString(k) + Integer.toString(l) +
@@ -432,6 +436,114 @@ public class Board implements Serializable {
         notationMap.put(6, 'g');
         notationMap.put(7, 'h');
     }
+
+
+    public void makeMoveForAI(int startX, int startY, int endX, int endY, String color, boolean boardRotated) {
+        Piece currentPiece = pieceAt(startY, startX);
+        String parsedCommand = Integer.toString(startY) + Integer.toString(startX) +
+                Integer.toString(endY) + Integer.toString(endX);
+        if (currentPiece != null && currentPiece.getColor().equals(color)) {
+            if (isPossibleMove(startY, startX, parsedCommand, boardRotated)) {
+                if (isPromotionMove(startY, startX, parsedCommand)) {
+                /* HANDLE PROMOTIONS. */
+//                    String[] promotionChoices = { "Knight", "Bishop", "Rook", "Queen" };
+//                    String promotion = (String) JOptionPane.showInputDialog(window.getFrame(),
+//                            "Choose your choice of promotion.",
+//                            "Pawn promotion",
+//                            JOptionPane.QUESTION_MESSAGE,
+//                            null,
+//                            promotionChoices,
+//                            promotionChoices[0]);
+//                    if (promotion == null) {
+//                        return;
+//                    }
+//                    board.movePiece(startY, startX, endY, endX, promotion, boardRotated);
+                }
+                /* HANDLE CASTLING. */
+//                else if (board.isCastleMove(startY, startX, parsedCommand, boardRotated)) {
+//                    board.castleMove(startY, startX, parsedCommand, boardRotated);
+//
+//
+//                    //implement
+//
+//                } else if (board.isIllegalKingMove(startY, startX, parsedCommand, boardRotated)) {
+//                    return;
+                else if (board[startY][startX] != null && ((startY != endY) || (startX != endX))) {
+                    board[endY][endX] = board[startY][startX];
+                    board[startY][startX] = null;
+                    lastMove = lastMove + Integer.toString(startY) + Integer.toString(startX) +
+                            Integer.toString(endY) + Integer.toString(endX);
+//                    lastMove = lastMove + "," + Integer.toString(startY) + Integer.toString(startX) +
+//                            Integer.toString(endY) + Integer.toString(endX);
+                }
+
+                /* Checking if the king is under attack. */
+                if (isKingAttacked(color, boardRotated)) {
+                    /* HANDLE KING UNDER ATTACK. */
+                }
+            } else {
+                /* HANDLE INCORRECT MOVE. */
+            }
+        }
+    }
+
+    /* Evaluates the board: positive for white, negative for black. */
+    public int getBoardValue(boolean isBoardRotated) {
+        int score = 0;
+        /* Strategy #1: the quantity of pieces. */
+        for (int i = 0; i < boardDim; i++) {
+            for (int j = 0; j < boardDim; j++) {
+                if (pieceAt(i, j) != null) {
+                    switch (pieceAt(i, j).getFullName()) {
+                        case "wp": score = score + 1; break;
+                        case "bp": score = score - 1; break;
+                        case "wn": score = score + 3; break;
+                        case "bn": score = score - 3; break;
+                        case "wr": score = score + 5; break;
+                        case "br": score = score - 5; break;
+                        case "wb": score = score + 3; break;
+                        case "bb": score = score - 3; break;
+                        case "wq": score = score + 9; break;
+                        case "bq": score = score - 9; break;
+                    }
+                }
+            }
+        }
+        /* Strategy #2: if king is attacked. */
+        if (isKingAttacked("white", isBoardRotated)) {
+            score = score - 15;
+        } else if (isKingAttacked("black", isBoardRotated)) {
+            score = score + 15;
+        }
+        return score;
+    }
+
+    public String getRandomMove(String color, boolean boardRotated) {
+        ArrayList<String> possibleMoves = new ArrayList<>();
+        for (int i = 0; i < boardDim; i++) {
+            for (int j = 0; j < boardDim; j++) {
+                if (pieceAt(i, j) != null && pieceAt(i, j).getColor().equals(color)) {
+                    possibleMoves.addAll(getPossibleMoves(i, j, boardRotated));
+                }
+            }
+        }
+        if (possibleMoves.size() == 0) {
+            System.out.println("No moves whatsoever -> mate.");
+            return null;
+        } else {
+            return possibleMoves.get(0);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
 
     public void printBoard() {
         for (int i = 0; i < boardDim; i++) {
