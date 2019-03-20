@@ -1,15 +1,19 @@
 package com.chessgame.Utils;
 
 public class MoveValue {
-    private int value;
+    private double value;
     private String move;
 
-    public MoveValue(int value, String move) {
+    public MoveValue(double value, String move) {
         this.value = value;
         this.move = move;
     }
 
-    public int getValue() {
+    public void addValue(double x) {
+        value += x;
+    }
+
+    public double getValue() {
         return value;
     }
 

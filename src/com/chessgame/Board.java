@@ -14,20 +14,26 @@ public class Board implements Serializable {
     private Piece[][] board;
     private String lastMove;
     private HashMap<Integer, Character> notationMap;
-    private HashSet<String> piecesMoved;
+    private int moveNumber;
     private String initialPositionFile;
-
+    private ArrayList<String> debutMoves;
+    private String debutFileLocation;
 
     public Board() {
-        this(new Piece[8][8], "", true);
+        this(new Piece[8][8], "", 0, true);
     }
 
-    public Board(Piece[][] board, String lastMove, boolean needInitTheBoard) {
+    public Board(Piece[][] board, String lastMove, int moveNumber, boolean needInitTheBoard) {
         boardDim = 8;
         notationMap = new HashMap<>();
-        piecesMoved = new HashSet<>();
+        this.moveNumber = moveNumber;
+        debutFileLocation = "././res/debut_moves.txt";
         initialPositionFile = "././res/initialPosition.txt";
 //        initialPositionFile = "././res/test_positon.txt";
+
+        initDebutMoves();
+
+//        printDebutMoves();
 
         this.board = board;
         this.lastMove = lastMove;
@@ -37,6 +43,21 @@ public class Board implements Serializable {
         }
         initNotationMap();
 
+    }
+
+    private void initDebutMoves() {
+        debutMoves = new ArrayList<>();
+        File initFile = new File(debutFileLocation);
+        try {
+            // catching exception
+            Scanner sc = new Scanner(initFile);
+            while (sc.hasNextLine()) {
+                debutMoves.add(sc.nextLine());
+            }
+            sc.close();
+        } catch (IOException | InputMismatchException ex) {
+            ex.printStackTrace();
+        }
     }
 
     private void initializeBoard() {
@@ -362,6 +383,7 @@ public class Board implements Serializable {
                 board[i2][j2] = board[i1][j1];
                 board[i1][j1] = null;
                 board[i2][j2].setHasMoved(true);
+                moveNumber++;
             }
 
 
@@ -488,8 +510,8 @@ public class Board implements Serializable {
     }
 
     /* Evaluates the board: positive for white, negative for black. */
-    public int getBoardValue(boolean isBoardRotated) {
-        int score = 0;
+    public double getBoardValue(boolean isBoardRotated) {
+        double score = 0;
         /* Strategy #1: the quantity of pieces. */
         for (int i = 0; i < boardDim; i++) {
             for (int j = 0; j < boardDim; j++) {
@@ -510,13 +532,111 @@ public class Board implements Serializable {
             }
         }
         /* Strategy #2: if king is attacked. */
-        if (isKingAttacked("white", isBoardRotated)) {
-            score = score - 15;
-        } else if (isKingAttacked("black", isBoardRotated)) {
-            score = score + 15;
-        }
+//        if (isKingAttacked("white", isBoardRotated)) {
+//            score = score - .5;
+//        } else if (isKingAttacked("black", isBoardRotated)) {
+//            score = score + .5;
+//        }
         return score;
     }
+
+
+
+
+
+
+
+
+
+    public void printDebutMoves() {
+        System.out.println();
+        for (String str : debutMoves) {
+            System.out.print(str + ", ");
+        }
+    }
+
+
+
+    public boolean isDebutMove(String str) {
+        return debutMoves.contains(str);
+    }
+
+    public boolean hasPieceMoved(String str) {
+        for (int i = 0; i < boardDim; i++) {
+            for (int j = 0; j < boardDim; j++) {
+                if (pieceAt(i, j) != null) {
+                    if (pieceAt(i, j).getFullName().equals(str) && pieceAt(i, j).isHasMoved()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public double closenessToEnemyKing(String str) {
+
+//        int i1 = Character.getNumericValue(str.charAt(0));
+//        int j1 = Character.getNumericValue(str.charAt(1));
+        int i2 = Character.getNumericValue(str.charAt(2));
+        int j2 = Character.getNumericValue(str.charAt(3));
+
+
+//        System.out.println("PRINTING: " + str);
+//        System.out.println("===================");
+//        System.out.println(pieceAt(i2, j2).getFullName());
+
+
+        String kingNotation = (pieceAt(i2, j2).getEnemySideFull().equals("white") ? "w" : "b") + "k";
+
+        double result = 0;
+        for (int i = 0; i < boardDim; i++) {
+            for (int j = 0; j < boardDim; j++) {
+                if (board[i][j] != null && board[i][j].getFullName().equals(kingNotation)) {
+                    double distance = Math.pow((i2 - i),2) + Math.pow((j2 - j), 2);
+                    if (isBetween(distance, 0, 15)) {
+                        result += 1;
+                    } else if (isBetween(distance, 15, 30)) {
+                        result += .5;
+                    } else if (isBetween(distance, 20, 40)) {
+                        result += .25;
+                    }
+                }
+            }
+        }
+//        System.out.println("========KING CLOSENESS===========: " + result);
+        return result;
+    }
+
+    private static boolean isBetween(double num, int x, int y) {
+        return num > x && num < y;
+    }
+
+
+    public boolean isBeginningOfTheGame() {
+        return moveNumber < 8;
+    }
+
+    public boolean isMiddleOfTheGame() {
+        return moveNumber > 8 && moveNumber < 20;
+    }
+
+    public int getMoveNumber() {
+        return moveNumber;
+    }
+
+    public void setMoveNumber(int x) {
+        moveNumber = x;
+    }
+
+
+
+
+
+
+
+
+
 
     public String getRandomMove(String color, boolean boardRotated) {
         ArrayList<String> possibleMoves = new ArrayList<>();

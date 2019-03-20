@@ -10,7 +10,6 @@ import com.chessgame.agents.Player;
 import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -27,7 +26,7 @@ public class Game {
     private Timer timer;
 
     private boolean gameFinished;
-    private LinkedList<GameState> gameStateHistory;
+//    private LinkedList<GameState> gameStateHistory;
     private boolean boardRotated;
 
     public Game() {
@@ -41,7 +40,7 @@ public class Game {
 
         boardRotated = false;
 
-        gameStateHistory = new LinkedList<>();
+//        gameStateHistory = new LinkedList<>();
 
 
         timer = new Timer();
@@ -94,6 +93,7 @@ public class Game {
                 if (board.isKingAttacked(currentTurnPlayer.getColor(), boardRotated)) {
                     board.setBoard(boardHist.getPrevious());
                     historyOfMoves.remove(historyOfMoves.size() - 1);
+                    board.setMoveNumber(board.getMoveNumber() - 1);
                     System.out.println("The king is under attack, try another move.");
                 } else {
                     switchCurrentPlayer();
@@ -197,7 +197,7 @@ public class Game {
         if (historyOfMoves.size() != 0) {
             lastMove = historyOfMoves.get(historyOfMoves.size() - 1);
         }
-        this.board = new Board(boardHist.getCurrent(), lastMove, false);
+        this.board = new Board(boardHist.getCurrent(), lastMove, board.getMoveNumber(), false);
 
 //        board.rotateBoard();
     }
@@ -210,7 +210,7 @@ public class Game {
                 lastMove = historyOfMoves.get(historyOfMoves.size() - 1);
             }
             /* Updating the state of the game. */
-            this.board = new Board(boardHist.getPrevious(), lastMove, false);
+            this.board = new Board(boardHist.getPrevious(), lastMove, board.getMoveNumber() - 1, false);
             historyOfMoves.remove(historyOfMoves.size() - 1);
             switchCurrentPlayer();
         }
@@ -319,6 +319,8 @@ public class Game {
                     Character.getNumericValue(move.charAt(3)), Character.getNumericValue(move.charAt(2)));
         }
     }
+
+
 
     public static void main(String[] args) {
         /* Starting a new game. */

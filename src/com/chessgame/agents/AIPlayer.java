@@ -28,16 +28,22 @@ public class AIPlayer extends Player {
     public void makeMove(Game game) {
 
         Piece[][] boardCopyArray = game.getBoard().getBoardCopy();
-        Board boardCopy = new Board(boardCopyArray, "", false);
+        Board boardCopy = new Board(boardCopyArray, "", 0, false);
+
+        minMaxDepth = game.getBoard().isBeginningOfTheGame() ? 2 : 3;
+        System.out.println("MA: " + minMaxDepth);
+
+        MoveValue bestMoveValue = minMaxMove(boardCopy, game.getCurrentPlayer().getColor(), "", Integer.MIN_VALUE,
+                Integer.MAX_VALUE, game.isBoardRotated(), 0, minMaxDepth, 0);
+        String bestMove = bestMoveValue.getMove();
+
+        System.out.println("MINMAX FINAL MOVE: " + bestMove + "; VALUE: " + bestMoveValue.getValue());
 
 
-        String bestMove = minMaxMove(boardCopy, game.getCurrentPlayer().getColor(), "",
-                game.isBoardRotated(), 0, minMaxDepth).getMove();
-
-        System.out.println("MINMAX FINAL MOVE: " + bestMove);
 
         /* Inevitable mate. */
         if (bestMove.equals("")) {
+            System.out.println("GOES HERE");
             game.makeRandomMove();
         } else {
             game.parseCommand(Character.getNumericValue(bestMove.charAt(1)), Character.getNumericValue(bestMove.charAt(0)),
@@ -55,10 +61,10 @@ public class AIPlayer extends Player {
             6. Evaluates a board and records the move with its score.
      */
 
-    public MoveValue minMaxMove(Board board, String currentPlayer, String moveSequence,
-                                boolean isBoardRotated, int depth, int maxDepth) {
+    public MoveValue minMaxMove(Board board, String currentPlayer, String moveSequence, double alpha, double beta,
+                                boolean isBoardRotated, int depth, int maxDepth, double extraValue) {
         if (depth == maxDepth) {
-            return getMoveValueOfTheBoard(board, moveSequence, isBoardRotated);
+            return getMoveValueOfTheBoard(board, moveSequence, isBoardRotated, extraValue);
         }
         if (currentPlayer.equals("white")) {
             MoveValue bestMoveValue = new MoveValue(Integer.MIN_VALUE, moveSequence);
@@ -70,7 +76,7 @@ public class AIPlayer extends Player {
                     if (currentPlayer.equals(board.pieceAt(i, j).getColor())) {
                         for (String str : board.getPossibleMoves(i, j, isBoardRotated)) {
                             Piece[][] boardCopyArray = board.getBoardCopy();
-                            Board boardCopy = new Board(boardCopyArray, str, false);
+                            Board boardCopy = new Board(boardCopyArray, str, board.getMoveNumber(), false);
                             boardCopy.makeMoveForAI(Character.getNumericValue(str.charAt(1)),
                                     Character.getNumericValue(str.charAt(0)), Character.getNumericValue(str.charAt(3)),
                                     Character.getNumericValue(str.charAt(2)), currentPlayer, isBoardRotated);
@@ -78,12 +84,65 @@ public class AIPlayer extends Player {
                                 continue;
                             }
 
-                            MoveValue moveVal = minMaxMove(boardCopy, otherPlayer(currentPlayer),
-                                    moveSequence + str, isBoardRotated, depth + 1, maxDepth);
-//                            System.out.println("Stringmove! : " + bestMoveValue.getMove());
+                            double newExtraValue = 0;
+
+
+                            /* Beginning of the game little strategies s.a. partial debuts,
+                               piece development, closeness to the enemy king. */
+                            if (boardCopy.isBeginningOfTheGame()) {
+                                if (depth == 0 && boardCopy.isDebutMove(str)) {
+                                    newExtraValue += Math.random() / 2;
+                                }
+                                if (!boardCopy.hasPieceMoved(str)) {
+                                    newExtraValue += .4;
+                                }
+                            /* Middle of the game strategies. */
+                            } else if (boardCopy.isMiddleOfTheGame()) {
+                                if (!boardCopy.hasPieceMoved(str)) {
+                                    newExtraValue += .3;
+                                }
+                                newExtraValue += boardCopy.closenessToEnemyKing(str);
+                            }
+
+                            newExtraValue += boardCopy.closenessToEnemyKing(str);
+
+
+
+
+
+
+                            MoveValue moveVal;
+
+                            /* Give a check as a current move. */
+                            if (boardCopy.isKingAttacked(otherPlayer(currentPlayer), isBoardRotated) && depth == 0) {
+                                newExtraValue += .5;
+                                moveVal = minMaxMove(boardCopy, otherPlayer(currentPlayer),
+                                    moveSequence + str, alpha, beta,
+                                        isBoardRotated, depth + 1, maxDepth, extraValue + newExtraValue);
+                            } else {
+                                moveVal = minMaxMove(boardCopy, otherPlayer(currentPlayer),
+                                        moveSequence + str, alpha, beta,
+                                        isBoardRotated, depth + 1, maxDepth, extraValue + newExtraValue);
+                            }
+
+
+
+
+
+//                            MoveValue moveVal = minMaxMove(boardCopy, otherPlayer(currentPlayer),
+//                                    moveSequence + str, alpha, beta, isBoardRotated, depth + 1, maxDepth);
                             if (bestMoveValue.getValue() < moveVal.getValue()) {
+//                                System.out.println("Bes: " + bestMoveValue.getValue() + "; movVal: " + moveVal.getValue());
                                 bestMoveValue = moveVal;
                             }
+
+
+
+//                            alpha = Math.max(alpha, bestMoveValue.getValue());
+//
+//                            if (alpha >= beta) {
+//                                break;
+//                            }
                         }
                     }
                 }
@@ -100,21 +159,64 @@ public class AIPlayer extends Player {
                     if (currentPlayer.equals(board.pieceAt(i, j).getColor())) {
                         for (String str : board.getPossibleMoves(i, j, isBoardRotated)) {
                             Piece[][] boardCopyArray = board.getBoardCopy();
-                            Board boardCopy = new Board(boardCopyArray, str, false);
+                            Board boardCopy = new Board(boardCopyArray, str, board.getMoveNumber(), false);
                             boardCopy.makeMoveForAI(Character.getNumericValue(str.charAt(1)),
                                     Character.getNumericValue(str.charAt(0)), Character.getNumericValue(str.charAt(3)),
                                     Character.getNumericValue(str.charAt(2)), currentPlayer, isBoardRotated);
                             if (boardCopy.isKingAttacked(currentPlayer, isBoardRotated)) {
                                 continue;
                             }
+                            double newExtraValue = 0;
 
-                            MoveValue moveVal = minMaxMove(boardCopy, otherPlayer(currentPlayer),
-                                    moveSequence + str, isBoardRotated, depth + 1, maxDepth);
+                            /* Beginning of the game little strategies s.a.
+                               piece development, closeness to the enemy king. */
+                            if (boardCopy.isBeginningOfTheGame()) {
+                                if (depth == 0 && boardCopy.isDebutMove(str)) {
+                                    newExtraValue -= Math.random() / 2;
+                                }
+                                if (!boardCopy.hasPieceMoved(str)) {
+                                    newExtraValue -= .4;
+                                }
+                                /* Middle of the game strategies. */
+                            } else if (boardCopy.isMiddleOfTheGame()) {
+                                if (!boardCopy.hasPieceMoved(str)) {
+                                    newExtraValue -= .3;
+                                }
+                                newExtraValue -= boardCopy.closenessToEnemyKing(str);
+                            }
+
+                            newExtraValue -= boardCopy.closenessToEnemyKing(str);
+
+
+
+
+                            MoveValue moveVal;
+
+                            /* Give a check as a current move. */
+                            if (boardCopy.isKingAttacked(otherPlayer(currentPlayer), isBoardRotated) && depth == 0) {
+                                moveVal = minMaxMove(boardCopy, otherPlayer(currentPlayer),
+                                        moveSequence + str, alpha, beta,
+                                        isBoardRotated, depth + 1, maxDepth, extraValue + newExtraValue);
+                            } else {
+                                moveVal = minMaxMove(boardCopy, otherPlayer(currentPlayer),
+                                        moveSequence + str, alpha, beta,
+                                        isBoardRotated, depth + 1, maxDepth, extraValue + newExtraValue);
+                            }
+
+
+
+//                            MoveValue moveVal = minMaxMove(boardCopy, otherPlayer(currentPlayer),
+//                                    moveSequence + str, alpha, beta, isBoardRotated, depth + 1, maxDepth);
                             if (moveVal.getValue() < bestMoveValue.getValue()) {
-//                                System.out.println("Bestmoveval: " + bestMoveValue.getValue());
-//                                System.out.println("moveval: " + moveVal.getValue());
                                 bestMoveValue = moveVal;
                             }
+
+
+
+//                            beta = Math.min(beta, bestMoveValue.getValue());
+//                            if (alpha >= beta) {
+//                                break;
+//                            }
                         }
                     }
                 }
@@ -132,8 +234,8 @@ public class AIPlayer extends Player {
         return 0;
     }
 
-    private MoveValue getMoveValueOfTheBoard(Board board, String moveSequence, boolean isBoardRotated) {
-        return new MoveValue(board.getBoardValue(isBoardRotated), moveSequence);
+    private MoveValue getMoveValueOfTheBoard(Board board, String moveSequence, boolean isBoardRotated, double extraValue) {
+        return new MoveValue(board.getBoardValue(isBoardRotated) + extraValue, moveSequence);
     }
 
     @Override
