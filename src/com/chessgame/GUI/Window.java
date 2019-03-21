@@ -16,29 +16,16 @@ public class Window extends JPanel {
 
     public Window(Game game) {
         this.game = game;
-
         gameSavesPath = "././res/";
-
         frame = new JFrame("Chess Game");
-
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
         myPanel = new MyPanel(this.game, frame);
         frame.add(myPanel);
 
-
-
-
-
-
         createMenu();
         frame.setJMenuBar(menuBar);
-
         frame.validate();
-
         frame.pack();
-
-
 
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -65,7 +52,7 @@ public class Window extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 String[] colorChoice = { "white", "black"};
                 String color = (String) JOptionPane.showInputDialog(frame,
-                        "Choose color.",
+                        "Choose color",
                         "Color choosing",
                         JOptionPane.QUESTION_MESSAGE,
                         null,
@@ -107,7 +94,7 @@ public class Window extends JPanel {
                 String message = JOptionPane.showInputDialog(frame, "Enter the file name.",
                         "Saving the game", JOptionPane.INFORMATION_MESSAGE);
                 System.out.println(message);
-                // check for filename!
+                /* implement a check for the filename */
                 game.serialize(gameSavesPath + message);
 
             }
@@ -147,7 +134,20 @@ public class Window extends JPanel {
         m3_1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("Not implemented yet.");
+                String[] difficultyChoice = { "Easy", "A little harder"};
+                String difficulty = (String) JOptionPane.showInputDialog(frame,
+                        "Choose difficulty",
+                        "Difficulty choosing",
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        difficultyChoice,
+                        difficultyChoice[0]);
+
+                if (difficulty.equals("Easy")) {
+                    game.setAIDifficulty(2);
+                } else if (difficulty.equals("A little harder")) {
+                    game.setAIDifficulty(3);
+                }
             }
         });
 
@@ -160,7 +160,6 @@ public class Window extends JPanel {
         });
 
         menuBar.add(menu3);
-
     }
 
     public JFrame getFrame() {

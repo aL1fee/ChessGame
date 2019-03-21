@@ -20,12 +20,9 @@ class MyPanel extends JPanel {
     private int initialFigurePosX;
     private int initialFigurePosY;
     private int squareSize;
-
     private JFrame frame;
     private String figuresPngFilepath;
     private Game game;
-
-
 
     public MyPanel(Game game, JFrame frame) {
         width = 700;
@@ -33,7 +30,6 @@ class MyPanel extends JPanel {
         squareSize = 50;
         boardDim = game.getBoard().getBoardDim();
         figuresPngFilepath = "././res/chess_pieces.png";
-
 
         this.frame = frame;
         this.game = game;
@@ -46,7 +42,6 @@ class MyPanel extends JPanel {
             public void mouseMoved(MouseEvent e) {}
         });
 
-
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -54,17 +49,10 @@ class MyPanel extends JPanel {
 
                 int x = e.getX();
                 int y = e.getY();
-
                 int offsetX = 75;
                 int offsetY = 50;
-
                 initialFigurePosX = (x - offsetX) / squareSize;
                 initialFigurePosY = (y - offsetY) / squareSize;
-
-//                System.out.println("initialFigurePosX: " + initialFigurePosX);
-//                System.out.println("initialFigurePosY: " + initialFigurePosY);
-//                System.out.println("X: " + x + " and Y: " + y);
-
             }
 
             @Override
@@ -73,23 +61,10 @@ class MyPanel extends JPanel {
 
                 int x = e.getX();
                 int y = e.getY();
-
                 int offsetX = 75;
                 int offsetY = 50;
-
                 int finalFigurePosX = (x - offsetX) / squareSize;
                 int finalFigurePosY  = (y - offsetY) / squareSize;
-
-
-//                System.out.println();
-//                System.out.println("===================================");
-//                System.out.println("startX: " + initialFigurePosX);
-//                System.out.println("startY: " + initialFigurePosY);
-//                System.out.println("endX: " + finalFigurePosX);
-//                System.out.println("endY: " + finalFigurePosY);
-//                System.out.println("===================================");
-//                System.out.println();
-
 
                 if (initialFigurePosX >= 0 && initialFigurePosX < boardDim &&
                         initialFigurePosY >= 0 && initialFigurePosY < boardDim &&
@@ -98,27 +73,10 @@ class MyPanel extends JPanel {
                         x > offsetX && x < offsetX + 400 && y > offsetY && y < offsetY + 400 &&
                         !game.getCurrentPlayer().isAI()) {
                     game.getCurrentPlayer().makeMove(game, initialFigurePosX, initialFigurePosY, finalFigurePosX, finalFigurePosY);
-//                    game.parseCommand(initialFigurePosX, initialFigurePosY, finalFigurePosX, finalFigurePosY);
                     repaint();
                 }
             }
         });
-
-
-
-    }
-
-    public Dimension getPreferredSize() {
-        return new Dimension(width, height);
-    }
-
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-
-        g.drawString("Moves:", 560, 60);
-        drawBoard(g);
-        drawFigures(g);
-        drawHistoryOfMoves(g);
     }
 
     private void drawBoard(Graphics g) {
@@ -152,7 +110,6 @@ class MyPanel extends JPanel {
         int offsetY = 0;
         int offsetX;
 
-//        for (int i = boardDim - 1; i >= 0; i--) {
         for (int i = 0; i < boardDim; i++) {
             offsetY += squareSize;
             offsetX = 25;
@@ -210,7 +167,6 @@ class MyPanel extends JPanel {
                 }
             }
         }
-
         /* Adding a board border. */
         Graphics2D g2 = (Graphics2D) g;
         Stroke oldStroke = g2.getStroke();
@@ -220,18 +176,30 @@ class MyPanel extends JPanel {
         g2.setStroke(oldStroke);
     }
 
+    public Dimension getPreferredSize() {
+        return new Dimension(width, height);
+    }
+
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        g.drawString("Moves:", 560, 60);
+        drawBoard(g);
+        drawFigures(g);
+        drawHistoryOfMoves(g);
+    }
+
     public void drawHistoryOfMoves(Graphics g) {
         String movesString = game.getHistoryOfMoves();
         System.out.println(movesString);
 
         g.setColor(Color.BLACK);
-//        g.setFont(new Font("TimesRoman", Font.PLAIN, 14));
+        g.setFont(new Font("TimesRoman", Font.BOLD, 14));
 
         int x = 505;
         int y = 75;
         for (String line : movesString.split("\n")) {
             g.drawString(line, x, y += g.getFontMetrics().getHeight());
         }
-
     }
 }

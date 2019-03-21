@@ -7,14 +7,11 @@ import com.chessgame.Utils.MoveValue;
 
 public class AIPlayer extends Player {
 
-    private Board board;
-    public int minMaxDepth;
+    private int minMaxDepth;
     private boolean isAI;
-//    public HashMap<String, Integer> valueSystem;
 
     public AIPlayer(String color, Board board) {
         super(color);
-        this.board = board;
         minMaxDepth = 3;
         isAI = true;
     }
@@ -26,24 +23,26 @@ public class AIPlayer extends Player {
 
     @Override
     public void makeMove(Game game) {
-
         Piece[][] boardCopyArray = game.getBoard().getBoardCopy();
         Board boardCopy = new Board(boardCopyArray, "", 0, false);
 
-        minMaxDepth = game.getBoard().isBeginningOfTheGame() ? 2 : 3;
-        System.out.println("MA: " + minMaxDepth);
+        int currentDepth = game.getBoard().isBeginningOfTheGame() ? 2 : minMaxDepth;
+
+        long startTime = System.currentTimeMillis();
 
         MoveValue bestMoveValue = minMaxMove(boardCopy, game.getCurrentPlayer().getColor(), "", Integer.MIN_VALUE,
-                Integer.MAX_VALUE, game.isBoardRotated(), 0, minMaxDepth, 0);
+                Integer.MAX_VALUE, game.isBoardRotated(), 0, currentDepth, 0);
+
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        System.out.println("Time taken: " + elapsedTime);
+
         String bestMove = bestMoveValue.getMove();
 
-        System.out.println("MINMAX FINAL MOVE: " + bestMove + "; VALUE: " + bestMoveValue.getValue());
-
-
+        System.out.println("Minmax final move: " + bestMove + "; Value: " + bestMoveValue.getValue());
 
         /* Inevitable mate. */
         if (bestMove.equals("")) {
-            System.out.println("GOES HERE");
             game.makeRandomMove();
         } else {
             game.parseCommand(Character.getNumericValue(bestMove.charAt(1)), Character.getNumericValue(bestMove.charAt(0)),
@@ -51,15 +50,6 @@ public class AIPlayer extends Player {
         }
     }
 
-
-
-
-    /*  1. while within depth:
-            3. Makes a move for AI but doesn't paint it.
-            4. Evaluates a board and records the move with its score.
-            5. Makes a move for a player but doesn't paint it.
-            6. Evaluates a board and records the move with its score.
-     */
 
     public MoveValue minMaxMove(Board board, String currentPlayer, String moveSequence, double alpha, double beta,
                                 boolean isBoardRotated, int depth, int maxDepth, double extraValue) {
@@ -86,7 +76,6 @@ public class AIPlayer extends Player {
 
                             double newExtraValue = 0;
 
-
                             /* Beginning of the game little strategies s.a. partial debuts,
                                piece development, closeness to the enemy king. */
                             if (boardCopy.isBeginningOfTheGame()) {
@@ -103,13 +92,7 @@ public class AIPlayer extends Player {
                                 }
                                 newExtraValue += boardCopy.closenessToEnemyKing(str);
                             }
-
                             newExtraValue += boardCopy.closenessToEnemyKing(str);
-
-
-
-
-
 
                             MoveValue moveVal;
 
@@ -125,24 +108,13 @@ public class AIPlayer extends Player {
                                         isBoardRotated, depth + 1, maxDepth, extraValue + newExtraValue);
                             }
 
-
-
-
-
-//                            MoveValue moveVal = minMaxMove(boardCopy, otherPlayer(currentPlayer),
-//                                    moveSequence + str, alpha, beta, isBoardRotated, depth + 1, maxDepth);
                             if (bestMoveValue.getValue() < moveVal.getValue()) {
-//                                System.out.println("Bes: " + bestMoveValue.getValue() + "; movVal: " + moveVal.getValue());
                                 bestMoveValue = moveVal;
                             }
-
-
-
-//                            alpha = Math.max(alpha, bestMoveValue.getValue());
-//
-//                            if (alpha >= beta) {
-//                                break;
-//                            }
+                            alpha = Math.max(alpha, bestMoveValue.getValue());
+                            if (alpha >= beta) {
+                                break;
+                            }
                         }
                     }
                 }
@@ -155,7 +127,6 @@ public class AIPlayer extends Player {
                     if (board.pieceAt(i, j) == null) {
                         continue;
                     }
-//                    System.out.println("HEY!!!!!!!!!!!!!!!! : " + bestMoveValue.getValue());
                     if (currentPlayer.equals(board.pieceAt(i, j).getColor())) {
                         for (String str : board.getPossibleMoves(i, j, isBoardRotated)) {
                             Piece[][] boardCopyArray = board.getBoardCopy();
@@ -184,16 +155,12 @@ public class AIPlayer extends Player {
                                 }
                                 newExtraValue -= boardCopy.closenessToEnemyKing(str);
                             }
-
                             newExtraValue -= boardCopy.closenessToEnemyKing(str);
 
-
-
-
                             MoveValue moveVal;
-
                             /* Give a check as a current move. */
                             if (boardCopy.isKingAttacked(otherPlayer(currentPlayer), isBoardRotated) && depth == 0) {
+                                newExtraValue -= .5;
                                 moveVal = minMaxMove(boardCopy, otherPlayer(currentPlayer),
                                         moveSequence + str, alpha, beta,
                                         isBoardRotated, depth + 1, maxDepth, extraValue + newExtraValue);
@@ -203,20 +170,13 @@ public class AIPlayer extends Player {
                                         isBoardRotated, depth + 1, maxDepth, extraValue + newExtraValue);
                             }
 
-
-
-//                            MoveValue moveVal = minMaxMove(boardCopy, otherPlayer(currentPlayer),
-//                                    moveSequence + str, alpha, beta, isBoardRotated, depth + 1, maxDepth);
                             if (moveVal.getValue() < bestMoveValue.getValue()) {
                                 bestMoveValue = moveVal;
                             }
-
-
-
-//                            beta = Math.min(beta, bestMoveValue.getValue());
-//                            if (alpha >= beta) {
-//                                break;
-//                            }
+                            beta = Math.min(beta, bestMoveValue.getValue());
+                            if (alpha >= beta) {
+                                break;
+                            }
                         }
                     }
                 }
@@ -226,16 +186,16 @@ public class AIPlayer extends Player {
         return null;
     }
 
-    private String otherPlayer(String str) {
-        return (str.equals("white")) ? "black" : "white";
-    }
-
-    private int getValueOfTheBoard(Game game) {
-        return 0;
-    }
-
     private MoveValue getMoveValueOfTheBoard(Board board, String moveSequence, boolean isBoardRotated, double extraValue) {
         return new MoveValue(board.getBoardValue(isBoardRotated) + extraValue, moveSequence);
+    }
+
+    public void setDifficulty(int i) {
+        minMaxDepth = i;
+    }
+
+    private String otherPlayer(String str) {
+        return (str.equals("white")) ? "black" : "white";
     }
 
     @Override

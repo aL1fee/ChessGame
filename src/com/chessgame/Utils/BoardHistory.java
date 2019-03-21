@@ -59,13 +59,25 @@ public class BoardHistory implements Serializable {
         return copyArray;
     }
 
-
-    public ArrayList<Piece[][]> getAll() {
-        return boards;
-    }
-
-    public void setBoards(ArrayList<Piece[][]> bds) {
-        boards = bds;
+    public Piece[][] getPreviousTwo() {
+        if ((index - 2) >= 0) {
+            boards.remove(index);
+            boards.remove(index - 1);
+            index -= 2;
+        }
+        Piece[][] copyArray = new Piece[boardDim][boardDim];
+        try {
+            for (int i = 0; i < boardDim; i++) {
+                for (int j = 0; j < boardDim; j++) {
+                    if (boards.get(index)[i][j] == null) {
+                        boards.get(index)[i][j] = null;
+                    } else {
+                        copyArray[i][j] = boards.get(index)[i][j].clone();
+                    }
+                }
+            }
+        } catch (CloneNotSupportedException ex) {}
+        return copyArray;
     }
 
     public void printAllBoards() {
@@ -89,5 +101,13 @@ public class BoardHistory implements Serializable {
                 }
             }
         }
+    }
+
+    public ArrayList<Piece[][]> getAll() {
+        return boards;
+    }
+
+    public void setBoards(ArrayList<Piece[][]> bds) {
+        boards = bds;
     }
 }

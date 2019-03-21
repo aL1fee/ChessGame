@@ -14,11 +14,13 @@ public abstract class Player implements Serializable {
 
     public abstract boolean isAI();
 
+    public abstract void setDifficulty(int i);
+
     public Player(String color) {
         this.color = color;
     }
 
     public String getColor() {
-            return color;
+        return color;
     }
 }

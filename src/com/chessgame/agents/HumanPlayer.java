@@ -12,9 +12,6 @@ public class HumanPlayer extends Player {
     }
 
     @Override
-    public void makeMove(Game game) {}
-
-    @Override
     public void makeMove(Game game, int startX, int startY, int endX, int endY) {
         game.parseCommand(startX, startY, endX, endY);
     }
@@ -23,4 +20,10 @@ public class HumanPlayer extends Player {
     public boolean isAI() {
         return isAI;
     }
+
+    @Override
+    public void makeMove(Game game) {}
+
+    @Override
+    public void setDifficulty(int i) {}
 }
